@@ -1,1 +1,1 @@
-*.html linguist-detectable=falsegit add .gitattributes
+**/*.html linguist-detectable=false
