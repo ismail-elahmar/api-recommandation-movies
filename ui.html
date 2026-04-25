@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ISMovie</title>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:       #E50914;
+      --red-hover: #F40612;
+      --red-dim:   rgba(229,9,20,0.12);
+      --red-glow:  rgba(229,9,20,0.30);
+      --black:     #141414;
+      --dark:      #181818;
+      --card:      #222222;
+      --card-h:    #2A2A2A;
+      --border:    rgba(255,255,255,0.08);
+      --border-r:  rgba(229,9,20,0.35);
+      --muted:     #A3A3A3;
+      --white:     #FFFFFF;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: var(--black);
+      color: var(--white);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Grain texture ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 70% 40% at 50% 0%, rgba(229,9,20,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 30% at 0% 100%, rgba(229,9,20,0.04) 0%, transparent 50%);
+    }
+
+    /* ══════════════════════════════════════════════
+       HEADER
+    ══════════════════════════════════════════════ */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(20,20,20,0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2.5rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-family: 'Google Sans', sans-serif;
+      font-size: 1.45rem;
+      font-weight: 700;
+      letter-spacing: -.02em;
+      display: flex; align-items: center; gap: 2px;
+    }
+    .logo-c {
+      color: var(--red);
+      font-style: italic;
+      text-shadow: 0 0 18px var(--red-glow);
+    }
+    .logo-rest { color: rgba(255,255,255,0.9); font-weight: 400; }
+
+    .header-badge {
+      font-size: .7rem; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--red);
+      background: var(--red-dim);
+      border: 1px solid var(--border-r);
+      padding: 4px 10px; border-radius: 2rem;
+    }
+
+    /* ══════════════════════════════════════════════
+       HERO
+    ══════════════════════════════════════════════ */
+    .hero {
+      position: relative; z-index: 1;
+      background: linear-gradient(180deg, rgba(229,9,20,0.06) 0%, transparent 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 3.5rem 2.5rem 2.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .hero-eyebrow {
+      font-size: .68rem; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--red); font-family: 'Roboto', monospace; font-weight: 500;
+    }
+
+    .hero-title {
+      font-family: 'Google Sans', sans-serif;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 400;
+      color: var(--white);
+      text-align: center;
+      line-height: 1.15;
+    }
+    .hero-title strong { color: var(--red); font-weight: 700; }
+
+    /* ── Search wrapper ── */
+    .search-wrapper {
+      width: 100%; max-width: 620px;
+      position: relative;
+    }
+    .search-inner {
+      display: flex; align-items: center;
+      background: var(--dark);
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .search-inner:focus-within {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px var(--red-dim);
+    }
+    .search-ico-left {
+      padding: 0 14px;
+      color: var(--muted);
+      display: flex; align-items: center;
+      flex-shrink: 0;
+    }
+    .search-box {
+      flex: 1;
+      height: 50px;
+      background: transparent;
+      border: none;
+      padding: 0 8px;
+      font-family: 'Roboto', sans-serif;
+      font-size: .95rem;
+      color: var(--white);
+      outline: none;
+    }
+    .search-box::placeholder { color: rgba(255,255,255,0.25); }
+
+    /* ── Dropdown ── */
+    .suggest-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px); left: 0; right: 0;
+      background: #1F1F1F;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+      overflow: hidden; z-index: 200;
+    }
+    .suggest-dropdown.open { display: block; }
+
+    .suggest-item {
+      padding: 11px 18px;
+      font-size: .88rem;
+      color: rgba(255,255,255,0.85);
+      cursor: pointer;
+      display: flex; align-items: center; gap: 12px;
+      border-bottom: 1px solid var(--border);
+      transition: background .12s, color .12s;
+    }
+    .suggest-item:last-child { border-bottom: none; }
+    .suggest-item:hover { background: var(--card-h); color: var(--white); }
+    .suggest-item:hover .suggest-dot { opacity: 1; background: var(--red); }
+
+    .suggest-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--muted); opacity: .5; flex-shrink: 0;
+      transition: background .12s, opacity .12s;
+    }
+
+    /* ── Controls ── */
+    .controls {
+      display: flex; align-items: center; gap: 14px;
+      width: 100%; max-width: 620px; flex-wrap: wrap;
+    }
+    .controls label { font-size: .8rem; color: var(--muted); white-space: nowrap; }
+
+    .limit-val {
+      font-size: .8rem; font-weight: 700;
+      color: var(--red); min-width: 22px;
+    }
+
+    input[type=range] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 3px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 3px;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--red);
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--red-glow);
+    }
+
+    .btn {
+      height: 40px; padding: 0 1.4rem;
+      background: var(--red);
+      color: var(--white);
+      border: none; border-radius: 4px;
+      font-family: 'Google Sans', sans-serif;
+      font-size: .88rem; font-weight: 700;
+      letter-spacing: .03em;
+      cursor: pointer; white-space: nowrap;
+      transition: background .15s, transform .1s, box-shadow .15s;
+      box-shadow: 0 2px 10px rgba(229,9,20,0.35);
+    }
+    .btn:hover:not(:disabled) { background: var(--red-hover); transform: translateY(-1px); box-shadow: 0 4px 18px rgba(229,9,20,0.5); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn:disabled { background: #333; box-shadow: none; cursor: not-allowed; color: #666; }
+
+    /* ══════════════════════════════════════════════
+       RESULTS AREA
+    ══════════════════════════════════════════════ */
+    .results-area {
+      position: relative; z-index: 1;
+      flex: 1;
+      max-width: 860px; width: 100%;
+      margin: 0 auto;
+      padding: 2rem 2rem 5rem;
+    }
+
+    /* ── Error bar ── */
+    .error-bar {
+      background: rgba(229,9,20,0.1);
+      border: 1px solid rgba(229,9,20,0.3);
+      border-radius: 6px;
+      padding: 12px 16px;
+      font-size: .85rem;
+      color: #ff6b6b;
+      margin-bottom: 1.2rem;
+      display: none;
+    }
+    .error-bar.show { display: block; }
+
+    /* ── Results meta ── */
+    .results-meta {
+      font-size: .8rem;
+      color: var(--muted);
+      margin-bottom: 1.2rem;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem;
+    }
+    .results-meta strong { color: var(--white); }
+    .results-meta .timing {
+      font-size: .72rem;
+      background: var(--dark); border: 1px solid var(--border);
+      padding: 3px 10px; border-radius: 2rem; color: var(--muted);
+    }
+
+    /* ── Card list ── */
+    .card-list { display: flex; flex-direction: column; gap: 4px; }
+
+    .result-card {
+      background: var(--dark);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 18px;
+      display: flex; align-items: center; gap: 14px;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, transform .15s, box-shadow .15s;
+      animation: fadeUp .22s ease both;
+    }
+    .result-card:hover {
+      background: var(--card-h);
+      border-color: var(--border-r);
+      transform: translateX(4px);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+    .rank {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--red-dim);
+      border: 1px solid var(--border-r);
+      color: var(--red);
+      font-size: .78rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background .15s;
+    }
+    .result-card:hover .rank { background: var(--red); color: var(--white); border-color: var(--red); }
+
+    .card-info { flex: 1; min-width: 0; }
+    .card-title { font-size: .93rem; color: rgba(255,255,255,0.9); }
+    .card-year  { font-size: .73rem; color: var(--muted); margin-top: 3px; }
+
+    .card-use {
+      font-size: .72rem; color: var(--red);
+      font-weight: 500; opacity: 0;
+      transition: opacity .15s; white-space: nowrap;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .result-card:hover .card-use { opacity: 1; }
+
+    /* ── Top badges ── */
+    .top-badge {
+      flex-shrink: 0;
+      font-size: .62rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em;
+      padding: 2px 8px; border-radius: 3px;
+    }
+    .badge-1 { background: rgba(229,9,20,.18); color: #ff8888; border: 1px solid rgba(229,9,20,.35); }
+    .badge-2 { background: rgba(255,255,255,.06); color: #ccc; border: 1px solid rgba(255,255,255,.12); }
+    .badge-3 { background: rgba(180,120,60,.15); color: #c8955a; border: 1px solid rgba(180,120,60,.3); }
+
+    /* ── State placeholder ── */
+    .state {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 1rem; height: 300px; text-align: center;
+    }
+    .state-ico {
+      width: 64px; height: 64px;
+      background: var(--red-dim);
+      border: 1px solid var(--border-r);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem;
+    }
+    .state-msg { font-size: .95rem; color: rgba(255,255,255,0.7); }
+    .state-sub { font-size: .8rem; color: var(--muted); }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 28px; height: 28px;
+      border: 2px solid rgba(255,255,255,0.08);
+      border-top-color: var(--red);
+      border-radius: 50%;
+      animation: spin .65s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ══════════════════════════════════════════════
+       FOOTER
+    ══════════════════════════════════════════════ */
+    footer {
+      position: relative; z-index: 1;
+      border-top: 1px solid var(--border);
+      background: rgba(20,20,20,0.8);
+      padding: 14px 24px;
+      text-align: center;
+      font-size: .72rem;
+      color: var(--muted);
+    }
+    footer a { color: var(--red); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      header { padding: 0 1.2rem; }
+      .hero { padding: 2.5rem 1.2rem 2rem; }
+      .results-area { padding: 1.5rem 1.2rem 4rem; }
+      .controls { gap: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <span class="logo-c">IS</span>M<span class="logo-rest">ovie</span>
+  </div>
+  <span class="header-badge">Recommandation IA</span>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">— Moteur de similarité collaborative —</div>
+  <div class="hero-title">Trouvez votre prochain film<br><strong>préféré</strong></div>
+
+  <div class="search-wrapper">
+    <div class="search-inner">
+      <span class="search-ico-left">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </span>
+      <input class="search-box" id="q" type="text" placeholder="Ex: The Dark Knight, Inception…" autocomplete="off"/>
+    </div>
+    <div class="suggest-dropdown" id="suggest"></div>
+  </div>
+
+  <div class="controls">
+    <label>Résultats :</label>
+    <input type="range" id="limit" min="1" max="50" value="10" step="1"/>
+    <span class="limit-val" id="lv">10</span>
+    <button class="btn" id="go" disabled>Recommander</button>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="results-area">
+  <div class="error-bar" id="err"></div>
+  <div id="panel">
+    <div class="state">
+      <div class="state-ico">🎬</div>
+      <div class="state-msg">Entrez un titre de film</div>
+      <div class="state-sub">Les films les plus similaires apparaîtront ici</div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  ISMovie &nbsp;·&nbsp; Filtrage collaboratif &nbsp;·&nbsp;
+  <a href="/docs">Documentation API</a>
+</footer>
+
+<script>
+  const qEl    = document.getElementById('q');
+  const sug    = document.getElementById('suggest');
+  const limEl  = document.getElementById('limit');
+  const lvEl   = document.getElementById('lv');
+  const goBtn  = document.getElementById('go');
+  const panel  = document.getElementById('panel');
+  const errBar = document.getElementById('err');
+  let sel = '', tmr = null;
+
+  limEl.addEventListener('input', () => { lvEl.textContent = limEl.value; });
+
+  qEl.addEventListener('input', () => {
+    sel = ''; goBtn.disabled = true;
+    clearTimeout(tmr);
+    const v = qEl.value.trim();
+    if (v.length < 2) { closeSug(); return; }
+    tmr = setTimeout(() => doSearch(v), 260);
+  });
+
+  async function doSearch(v) {
+    try {
+      const r = await fetch(`/search/?q=${encodeURIComponent(v)}&max_results=7`);
+      const d = await r.json();
+      renderSug(d.results || []);
+    } catch { closeSug(); }
+  }
+
+  function parseTitle(t) {
+    const year = (t.match(/\((\d{4})\)/) || [])[1];
+    const clean = t.replace(/\s*\(\d{4}\)/, '').replace(/,\s*(The|A|An)$/i, '').trim();
+    return { clean, year };
+  }
+
+  function renderSug(items) {
+    sug.innerHTML = '';
+    if (!items.length) { closeSug(); return; }
+    items.forEach(m => {
+      const { clean } = parseTitle(m);
+      const el = document.createElement('div');
+      el.className = 'suggest-item';
+      el.innerHTML = `<span class="suggest-dot"></span>${clean}`;
+      el.addEventListener('mousedown', () => {
+        qEl.value = m; sel = m; goBtn.disabled = false; closeSug();
+      });
+      sug.appendChild(el);
+    });
+    sug.classList.add('open');
+  }
+
+  function closeSug() { sug.classList.remove('open'); }
+  document.addEventListener('click', e => { if (!e.target.closest('.search-wrapper')) closeSug(); });
+
+  goBtn.addEventListener('click', recommend);
+  qEl.addEventListener('keydown', e => { if (e.key === 'Enter' && sel) recommend(); });
+
+  async function recommend() {
+    if (!sel) return;
+    errBar.classList.remove('show');
+    panel.innerHTML = `<div class="state"><div class="spinner"></div><div class="state-msg">Recherche en cours…</div></div>`;
+    try {
+      const t0 = Date.now();
+      const r  = await fetch(`/recommend/?movie_name=${encodeURIComponent(sel)}&limit=${limEl.value}`);
+      if (!r.ok) { const e = await r.json().catch(() => {}); throw new Error(e?.detail || `Erreur ${r.status}`); }
+      const d  = await r.json();
+      render(d, Date.now() - t0);
+    } catch(e) {
+      errBar.textContent = '⚠  ' + (e.message || 'Erreur inconnue.');
+      errBar.classList.add('show');
+      panel.innerHTML = '';
+    }
+  }
+
+  const badges = [
+    { cls: 'badge-1', lbl: '🥇 Top 1' },
+    { cls: 'badge-2', lbl: '🥈 Top 2' },
+    { cls: 'badge-3', lbl: '🥉 Top 3' },
+  ];
+
+  function render(data, ms) {
+    const recs = data.recommendations || [];
+    if (!recs.length) return;
+
+    panel.innerHTML = `
+      <div class="results-meta">
+        <span>Environ <strong>${recs.length} résultat${recs.length > 1 ? 's' : ''}</strong>
+        pour <strong>"${parseTitle(data.movie).clean}"</strong></span>
+        <span class="timing">${ms} ms</span>
+      </div>
+      <div class="card-list" id="cards"></div>`;
+
+    const list = document.getElementById('cards');
+    recs.forEach((title, i) => {
+      const { clean, year } = parseTitle(title);
+      const el = document.createElement('div');
+      el.className = 'result-card';
+      el.style.animationDelay = `${i * 30}ms`;
+      const badge = i < 3 ? `<span class="top-badge ${badges[i].cls}">${badges[i].lbl}</span>` : '';
+      el.innerHTML = `
+        <div class="rank">${i + 1}</div>
+        <div class="card-info">
+          <div class="card-title">${clean}</div>
+          ${year ? `<div class="card-year">${year}</div>` : ''}
+        </div>
+        ${badge}
+        <div class="card-use">
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+          Utiliser
+        </div>`;
+      el.addEventListener('click', () => { qEl.value = title; sel = title; goBtn.disabled = false; recommend(); });
+      list.appendChild(el);
+    });
+  }
+</script>
+</body>
+</html>
